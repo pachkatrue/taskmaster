@@ -4,7 +4,7 @@ A task and project management web application focused on offline-first UX, drag-
 
 ## Preview
 
-[Live demo](https://selfie-taskmaster-pro.netlify.app)
+[Live demo](https://taskmaster-portfolio.netlify.app)
 
 ![Project preview](https://d33wubrfki0l68.cloudfront.net/6817ba12128f2b6a86a22b2a/screenshot_2025-05-04-19-03-50-0000.webp)
 
