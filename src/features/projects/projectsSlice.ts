@@ -211,7 +211,7 @@ const projectsSlice = createSlice({
   },
   extraReducers: (builder) => {
     // Обработка состояний получения проектов
-    .addCase(fetchProjects.pending, (state) => {
+    builder.addCase(fetchProjects.pending, (state) => {
       state.isLoading = true;
       state.error = null;
     })
