@@ -3,7 +3,6 @@ import type { Project, ProjectStatus, ProjectUpdate } from '../../features/proje
 import type { Task } from '../../features/tasks/tasksSlice';
 import { syncService } from './syncService';
 import { generateId } from '../../utils';
-import { taskStorage } from './taskStorage';
 import { dbService } from './dbService';
 import { hasProjectAccess } from './storageAccess';
 
