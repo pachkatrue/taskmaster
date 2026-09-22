@@ -20,18 +20,8 @@ export const useProjects = () => {
   const { projects, isLoading, error } = useAppSelector(state => state.projects);
 
   // Загрузка проектов с учетом демо-режима
-  const loadProjects = useCallback(async () => {
-    dispatch(fetchProjectsStart());
-    try {
-      // Используем новый метод для получения проектов в зависимости от типа аккаунта
-      const userProjects = await dbService.getUserProjects();
-      dispatch(fetchProjectsSuccess(userProjects));
-      return userProjects;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Ошибка при загрузке проектов';
-      dispatch(fetchProjectsError(errorMessage));
-      throw error;
-    }
+  const loadProjects = useCallback(() => {
+    return dispatch(fetchProjects()).unwrap();
   }, [dispatch]);
 
   // Загрузка проекта по ID
@@ -61,7 +51,7 @@ export const useProjects = () => {
   // Изменение прогресса проекта
   const changeProjectProgress = useCallback(
     (projectId: string, progress: number) => {
-      return dispatch(updateProjectProgress({ projectId, progress }));
+      return dispatch(updateProjectProgress({ projectId, progress })).unwrap();
     },
     [dispatch]
   );
