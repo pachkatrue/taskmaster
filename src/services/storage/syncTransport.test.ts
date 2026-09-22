@@ -51,7 +51,7 @@ describe('sync transport', () => {
   it('keeps an unconfigured transport explicit instead of simulating success', async () => {
     const transport = createSyncTransport();
 
-    await expect(transport.send(item)).rejects.toMatchObject<Partial<SyncTransportError>>({
+    await expect(transport.send(item)).rejects.toMatchObject({
       retryable: false,
       discard: false,
     });
