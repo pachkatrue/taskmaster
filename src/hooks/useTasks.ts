@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../store';
 import {
-  fetchTasksStart,
-  fetchTasksSuccess,
-  fetchTasksError,
+  fetchTasks,
   createTask,
   updateTask,
   deleteTask,
@@ -12,7 +10,6 @@ import {
   TaskStatus,
   TaskPriority
 } from '../features/tasks/tasksSlice';
-import { dbService } from '../services/storage/dbService';
 
 /**
  * Хук для работы с задачами
@@ -23,18 +20,8 @@ export const useTasks = () => {
   const { tasks, isLoading, error } = useAppSelector(state => state.tasks);
 
   // Загрузка задач с учетом демо-режима
-  const loadTasks = useCallback(async () => {
-    dispatch(fetchTasksStart());
-    try {
-      // Используем новый метод для получения задач в зависимости от типа аккаунта
-      const userTasks = await dbService.getUserTasks();
-      dispatch(fetchTasksSuccess(userTasks));
-      return userTasks;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Ошибка при загрузке задач';
-      dispatch(fetchTasksError(errorMessage));
-      throw error;
-    }
+  const loadTasks = useCallback(() => {
+    return dispatch(fetchTasks()).unwrap();
   }, [dispatch]);
 
   // Создание новой задачи
