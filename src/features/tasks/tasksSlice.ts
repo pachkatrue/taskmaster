@@ -1,4 +1,5 @@
-import { createSlice, PayloadAction, createAsyncThunk, createAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 import { taskStorage } from '../../services/storage/taskStorage';
 
 // Типы для задач
@@ -38,11 +39,6 @@ const initialState: TasksState = {
   error: null,
 };
 
-// Новые экшены для работы с оптимизированной загрузкой задач
-export const fetchTasksStart = createAction('tasks/fetchTasksStart');
-export const fetchTasksSuccess = createAction<Task[]>('tasks/fetchTasksSuccess');
-export const fetchTasksError = createAction<string>('tasks/fetchTasksError');
-
 // Асинхронные экшены для задач, использующие хранилище вместо моков
 export const fetchTasks = createAsyncThunk(
   'tasks/fetchTasks',
@@ -65,6 +61,24 @@ export const createTask = createAsyncThunk(
       return await taskStorage.addTask(taskData);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Ошибка при создании задачи. Попробуйте еще раз.'
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const updateTaskStatus = createAsyncThunk(
+  'tasks/updateTaskStatus',
+  async (
+    { taskId, status }: { taskId: string; status: TaskStatus },
+    { rejectWithValue }
+  ) => {
+    try {
+      return await taskStorage.updateTaskStatus(taskId, status);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Ошибка при обновлении статуса задачи. Попробуйте еще раз.';
       return rejectWithValue(errorMessage);
     }
   }
@@ -139,22 +153,8 @@ const tasksSlice = createSlice({
   name: 'tasks',
   initialState,
   reducers: {
-    // Дополнительные редьюсеры
     clearTasksError: (state) => {
       state.error = null;
-    },
-    updateTaskStatus: (state, action: PayloadAction<{ taskId: string; status: TaskStatus }>) => {
-      const { taskId, status } = action.payload;
-      const task = state.tasks.find(task => task.id === taskId);
-
-      if (task) {
-        task.status = status;
-        task.updatedAt = new Date().toISOString();
-
-        // Также обновляем в хранилище
-        taskStorage.updateTaskStatus(taskId, status)
-        .catch(error => console.error('Ошибка при обновлении статуса задачи:', error));
-      }
     },
   },
   extraReducers: (builder) => {
@@ -218,6 +218,24 @@ const tasksSlice = createSlice({
       state.error = action.payload as string;
     })
 
+    // Обработка изменения статуса задачи
+    .addCase(updateTaskStatus.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+    })
+    .addCase(updateTaskStatus.fulfilled, (state, action: PayloadAction<Task>) => {
+      state.isLoading = false;
+      const index = state.tasks.findIndex(task => task.id === action.payload.id);
+
+      if (index !== -1) {
+        state.tasks[index] = action.payload;
+      }
+    })
+    .addCase(updateTaskStatus.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload as string;
+    })
+
     // Обработка состояний удаления задачи
     .addCase(deleteTask.pending, (state) => {
       state.isLoading = true;
@@ -276,6 +294,6 @@ const tasksSlice = createSlice({
   },
 });
 
-export const { clearTasksError, updateTaskStatus } = tasksSlice.actions;
+export const { clearTasksError } = tasksSlice.actions;
 
 export default tasksSlice.reducer;
