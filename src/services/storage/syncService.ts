@@ -85,8 +85,8 @@ export const syncService = {
    */
   _syncIntervalId: null as ReturnType<typeof setInterval> | null,
 
-  _boundOnlineHandler: () => this._handleOnline(),
-  _boundOfflineHandler: () => this._handleOffline(),
+  _boundOnlineHandler: null as (() => void) | null,
+  _boundOfflineHandler: null as (() => void) | null,
 
   transport: createSyncTransport() as SyncTransport,
 
@@ -95,6 +95,9 @@ export const syncService = {
    */
   init(): void {
     // Добавляем слушатели событий изменения состояния сети
+    this._boundOnlineHandler ??= () => this._handleOnline();
+    this._boundOfflineHandler ??= () => this._handleOffline();
+
     window.addEventListener('online', this._boundOnlineHandler);
     window.addEventListener('offline', this._boundOfflineHandler);
 
@@ -121,8 +124,12 @@ export const syncService = {
    */
   dispose(): void {
     // Удаляем слушатели событий
-    window.removeEventListener('online', this._boundOnlineHandler);
-    window.removeEventListener('offline', this._boundOfflineHandler);
+    if (this._boundOnlineHandler) {
+      window.removeEventListener('online', this._boundOnlineHandler);
+    }
+    if (this._boundOfflineHandler) {
+      window.removeEventListener('offline', this._boundOfflineHandler);
+    }
 
     // Останавливаем периодическую синхронизацию
     if (this._syncIntervalId) {
