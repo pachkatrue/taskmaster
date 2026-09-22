@@ -184,7 +184,7 @@ const SearchPage: React.FC = () => {
               <p>
                 Найдено {results.length} {results.length === 1 ? 'результат' :
                 results.length > 1 && results.length < 5 ? 'результата' : 'результатов'}
-                по запросу "{query}"
+                по запросу &quot;{query}&quot;
               </p>
             </div>
           )}
