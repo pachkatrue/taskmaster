@@ -9,8 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run --coverage",
     "test:ci": "vitest run --coverage",
-    "lint": "eslint src --ext .ts,.tsx",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx,css}'",
     "prepare": "husky install",
     "generate-docs": "node scripts/generateDocs.js"
