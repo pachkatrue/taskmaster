@@ -1,5 +1,5 @@
 import { db, handleDexieError } from './db';
-import { Task, TaskStatus } from '../../features/tasks/tasksSlice';
+import type { Task, TaskStatus, TaskUpdate } from '../../features/tasks/tasksSlice';
 import { syncService } from './syncService';
 import { generateId } from '../../utils';
 import { dbService } from './dbService';
@@ -201,7 +201,7 @@ export const taskStorage = {
   /**
    * Обновить задачу с проверкой существования и транзакциями
    */
-  async updateTask(taskData: Partial<Task> & { id: string }): Promise<Task> {
+  async updateTask(taskData: TaskUpdate & { id: string }): Promise<Task> {
     try {
       const session = await dbService.getCurrentSession();
       const isDemo =
@@ -321,7 +321,7 @@ export const taskStorage = {
   /**
    * Пакетное обновление задач с транзакцией
    */
-  async bulkUpdateTasks(tasks: Array<Partial<Task> & { id: string }>): Promise<void> {
+  async bulkUpdateTasks(tasks: Array<TaskUpdate & { id: string }>): Promise<void> {
     try {
       const session = await dbService.getCurrentSession();
       if (!session) {
