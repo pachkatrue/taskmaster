@@ -41,7 +41,7 @@ describe('sync transport', () => {
     vi.stubEnv('VITE_SYNC_API_URL', 'https://api.example.com');
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 422 })));
 
-    await expect(createSyncTransport().send(item)).rejects.toMatchObject<Partial<SyncTransportError>>({
+    await expect(createSyncTransport().send(item)).rejects.toMatchObject({
       retryable: false,
       discard: true,
       status: 422,
