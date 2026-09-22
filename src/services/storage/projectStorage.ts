@@ -45,11 +45,7 @@ export const projectStorage = {
       } else if (session) {
         // В обычном режиме возвращаем только проекты пользователя
         return await db.projects
-        .filter(project =>
-          !project.demoData &&
-          (project.teamMembers?.some(member => member.id === session.userId) ||
-            project.createdBy === session.userId)
-        )
+        .filter(project => hasProjectAccess(project, session, false))
         .toArray();
       }
 
@@ -73,15 +69,7 @@ export const projectStorage = {
       const session = await dbService.getCurrentSession();
       const isDemo = session?.provider === 'demo' || localStorage.getItem('demo_mode') === 'true';
 
-      // Проверяем доступ к проекту
-      if ((isDemo && project.demoData) ||
-        (!isDemo && !project.demoData && session &&
-          (project.teamMembers?.some(member => member.id === session.userId) ||
-            project.createdBy === session.userId))) {
-        return project;
-      }
-
-      return undefined;
+      return hasProjectAccess(project, session, isDemo) ? project : undefined;
     } catch (error) {
       handleDexieError(error, `Ошибка при получении проекта с ID ${id}`);
       return undefined;
@@ -328,7 +316,7 @@ export const projectStorage = {
       handleDexieError(error, `Ошибка при добавлении участника в проект с ID ${projectId}`);
       throw error;
     }
-  }
+  },
 
   /**
    * Поиск задач по тексту с оптимизированным алгоритмом
