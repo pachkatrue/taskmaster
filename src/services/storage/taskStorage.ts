@@ -230,7 +230,7 @@ export const taskStorage = {
             createdBy: existingTask.createdBy,
           };
 
-          await db.tasks.update(taskData.id, updatedTask);
+          await db.tasks.put(updatedTask);
           return updatedTask;
         }
       );
