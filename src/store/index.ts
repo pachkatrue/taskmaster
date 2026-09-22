@@ -1,5 +1,4 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { settingsPersistenceMiddleware } from '../features/settings/settingsPersistenceMiddleware';
 
 // Импортируем редьюсеры
