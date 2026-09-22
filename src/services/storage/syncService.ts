@@ -1,4 +1,5 @@
 import { db, handleDexieError } from './db';
+import { createSyncTransport, SyncTransportError, type SyncTransport } from './syncTransport';
 
 declare global {
   interface ServiceWorkerRegistration {
@@ -82,7 +83,9 @@ export const syncService = {
   /**
    * ID интервала для периодической синхронизации
    */
-  _syncIntervalId: null as NodeJS.Timeout | null,
+  _syncIntervalId: null as ReturnType<typeof setInterval> | null,
+
+  transport: createSyncTransport() as SyncTransport,
 
   /**
    * Инициализация сервиса синхронизации
@@ -230,7 +233,7 @@ export const syncService = {
       if (this.isOnline() && !this._isSyncing) {
         // Запускаем синхронизацию с небольшой задержкой,
         // чтобы дать время на добавление нескольких операций подряд
-        setTimeout(() => this.synchronize(), 100);
+        queueMicrotask(() => void this.synchronize());
       }
 
       return id;
@@ -475,10 +478,6 @@ export const syncService = {
           await db.syncQueue.update(item.id, updatedItem);
         }
 
-        // Добавляем небольшую задержку между запросами, чтобы не перегружать сервер
-        if (i < queue.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
       }
 
       // Проверяем, остались ли элементы в очереди
