@@ -1,4 +1,5 @@
-import { createSlice, PayloadAction, createAsyncThunk, createAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 import { projectStorage } from '../../services/storage/projectStorage';
 
 // Типы для проектов
@@ -35,11 +36,6 @@ const initialState: ProjectsState = {
   isLoading: false,
   error: null,
 };
-
-// Новые экшены для работы с оптимизированной загрузкой проектов
-export const fetchProjectsStart = createAction('projects/fetchProjectsStart');
-export const fetchProjectsSuccess = createAction<Project[]>('projects/fetchProjectsSuccess');
-export const fetchProjectsError = createAction<string>('projects/fetchProjectsError');
 
 // Асинхронные экшены для проектов с использованием хранилища
 export const fetchProjects = createAsyncThunk(
@@ -188,54 +184,11 @@ const projectsSlice = createSlice({
   name: 'projects',
   initialState,
   reducers: {
-    // Дополнительные редьюсеры
     clearProjectsError: (state) => {
       state.error = null;
     },
-    updateProjectProgress: (state, action: PayloadAction<{ projectId: string; progress: number }>) => {
-      const { projectId, progress } = action.payload;
-      const project = state.projects.find(project => project.id === projectId);
-
-      if (project) {
-        project.progress = progress;
-        project.updatedAt = new Date().toISOString();
-
-        // Также обновляем в хранилище
-        projectStorage.updateProjectProgress(projectId, progress)
-        .catch(error => console.error('Ошибка при обновлении прогресса проекта:', error));
-      }
-    },
-    updateProjectStatus: (state, action: PayloadAction<{ projectId: string; status: ProjectStatus }>) => {
-      const { projectId, status } = action.payload;
-      const project = state.projects.find(project => project.id === projectId);
-
-      if (project) {
-        project.status = status;
-        project.updatedAt = new Date().toISOString();
-
-        // Также обновляем в хранилище
-        projectStorage.updateProjectStatus(projectId, status)
-        .catch((error: unknown) => console.error('Ошибка при обновлении статуса проекта:', error));
-      }
-    },
   },
   extraReducers: (builder) => {
-    // Обработка новых экшенов для оптимизированной загрузки
-    builder
-    .addCase(fetchProjectsStart, (state) => {
-      state.isLoading = true;
-      state.error = null;
-    })
-    .addCase(fetchProjectsSuccess, (state, action: PayloadAction<Project[]>) => {
-      state.isLoading = false;
-      state.error = null;
-      state.projects = action.payload;
-    })
-    .addCase(fetchProjectsError, (state, action: PayloadAction<string>) => {
-      state.isLoading = false;
-      state.error = action.payload;
-    })
-
     // Обработка состояний получения проектов
     .addCase(fetchProjects.pending, (state) => {
       state.isLoading = true;
@@ -351,10 +304,6 @@ const projectsSlice = createSlice({
   },
 });
 
-export const {
-  clearProjectsError,
-  updateProjectProgress,
-  updateProjectStatus
-} = projectsSlice.actions;
+export const { clearProjectsError } = projectsSlice.actions;
 
 export default projectsSlice.reducer;
