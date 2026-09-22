@@ -389,6 +389,6 @@ export const projectStorage = {
       handleDexieError(error, `Ошибка при обновлении прогресса проекта с ID ${id}`);
       throw error;
     }
-  }
+  },
 
 };
