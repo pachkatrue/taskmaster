@@ -41,7 +41,7 @@ const SessionsManager: React.FC = () => {
     try {
       // Если это текущая сессия, не разрешаем её завершить
       if (sessionId === currentSessionId) {
-        alert('Невозможно завершить текущую сессию. Используйте кнопку "Выйти".');
+        alert('Невозможно завершить текущую сессию. Используйте кнопку &quot;Выйти&quot;.');
         return;
       }
 
@@ -133,7 +133,7 @@ const SessionsManager: React.FC = () => {
         <div className="mt-4">
           <button
             onClick={() => logout()}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            className=&quot;inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500&quot;
           >
             <svg className="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 3a1 1 0 10-2 0v8a1 1 0 102 0V6zm-6 0a1 1 0 10-2 0v8a1 1 0 102 0V6z" clipRule="evenodd" />
@@ -190,7 +190,7 @@ const SessionsManager: React.FC = () => {
               {session.id !== currentSessionId && (
                 <button
                   onClick={() => terminateSession(session.id)}
-                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                  className=&quot;text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300&quot;
                 >
                   Завершить
                 </button>
@@ -213,7 +213,7 @@ const SessionsManager: React.FC = () => {
       </div>
 
       <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-        <p>Выход из системы завершит все активные сессии. Если вы хотите завершить только одну сессию, используйте кнопку "Завершить" рядом с ней.</p>
+        <p>Выход из системы завершит все активные сессии. Если вы хотите завершить только одну сессию, используйте кнопку &quot;Завершить&quot; рядом с ней.</p>
       </div>
     </div>
   );
