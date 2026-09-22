@@ -160,20 +160,6 @@ const tasksSlice = createSlice({
   extraReducers: (builder) => {
     // Обработка состояний получения задач
     builder
-    .addCase(fetchTasksStart, (state) => {
-      state.isLoading = true;
-      state.error = null;
-    })
-    .addCase(fetchTasksSuccess, (state, action: PayloadAction<Task[]>) => {
-      state.isLoading = false;
-      state.error = null;
-      state.tasks = action.payload;
-    })
-    .addCase(fetchTasksError, (state, action: PayloadAction<string>) => {
-      state.isLoading = false;
-      state.error = action.payload;
-    })
-
     .addCase(fetchTasks.pending, (state) => {
       state.isLoading = true;
       state.error = null;
