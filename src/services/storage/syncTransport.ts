@@ -48,7 +48,8 @@ class UnconfiguredSyncTransport implements SyncTransport {
 }
 
 export const createSyncTransport = (): SyncTransport => {
-  const baseUrl = import.meta.env.VITE_SYNC_API_URL?.trim().replace(/\\/$/, '');
+  const configuredUrl = import.meta.env.VITE_SYNC_API_URL;
+  const baseUrl = configuredUrl ? configuredUrl.trim().replace(/\/+$/, '') : '';
 
   return baseUrl
     ? new HttpSyncTransport(baseUrl)
