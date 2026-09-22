@@ -85,6 +85,9 @@ export const syncService = {
    */
   _syncIntervalId: null as ReturnType<typeof setInterval> | null,
 
+  _boundOnlineHandler: () => this._handleOnline(),
+  _boundOfflineHandler: () => this._handleOffline(),
+
   transport: createSyncTransport() as SyncTransport,
 
   /**
@@ -92,8 +95,8 @@ export const syncService = {
    */
   init(): void {
     // Добавляем слушатели событий изменения состояния сети
-    window.addEventListener('online', this._handleOnline.bind(this));
-    window.addEventListener('offline', this._handleOffline.bind(this));
+    window.addEventListener('online', this._boundOnlineHandler);
+    window.addEventListener('offline', this._boundOfflineHandler);
 
     // Проверяем состояние сети при запуске
     if (this.isOnline()) {
@@ -118,8 +121,8 @@ export const syncService = {
    */
   dispose(): void {
     // Удаляем слушатели событий
-    window.removeEventListener('online', this._handleOnline.bind(this));
-    window.removeEventListener('offline', this._handleOffline.bind(this));
+    window.removeEventListener('online', this._boundOnlineHandler);
+    window.removeEventListener('offline', this._boundOfflineHandler);
 
     // Останавливаем периодическую синхронизацию
     if (this._syncIntervalId) {
@@ -280,7 +283,7 @@ export const syncService = {
 
   /**
    * Обработать элемент очереди синхронизации
-   * В реальном приложении здесь будет логика взаимодействия с API
+   * Отправить элемент через настроенный транспорт синхронизации
    */
   async processSyncItem(item: SyncQueueItem): Promise<boolean> {
     try {
@@ -441,7 +444,7 @@ export const syncService = {
 
       // Проверяем, остались ли элементы в очереди
       const remainingItems = await this.getSyncQueue();
-      const success = remainingItems.length === 0 || remainingItems.length === failed;
+      const success = failed === 0 && remainingItems.length === 0;
 
       // Оповещаем о завершении синхронизации
       this.notifySyncCompleted(success);
