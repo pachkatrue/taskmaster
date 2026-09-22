@@ -265,6 +265,7 @@ export const projectStorage = {
       const session = await dbService.getCurrentSession();
       const isDemo = session?.provider === 'demo' || localStorage.getItem('demo_mode') === 'true';
 
+      let changed = false;
       const updatedProject = await db.runTransaction('readwrite', ['projects'], async () => {
         const project = await db.projects.get(projectId);
 
@@ -280,17 +281,18 @@ export const projectStorage = {
           return project;
         }
 
-        const updatedProject: Project = {
+        const nextProject: Project = {
           ...project,
           teamMembers: [...project.teamMembers, member],
           updatedAt: new Date().toISOString(),
         };
 
-        await db.projects.put(updatedProject);
-        return updatedProject;
+        await db.projects.put(nextProject);
+        changed = true;
+        return nextProject;
       });
 
-      if (navigator.onLine && !isDemo) {
+      if (changed && navigator.onLine && !isDemo) {
         await syncService.addToSyncQueue('update', 'project', updatedProject);
       }
 
