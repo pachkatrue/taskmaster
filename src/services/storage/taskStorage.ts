@@ -3,22 +3,7 @@ import type { Task, TaskStatus, TaskUpdate } from '../../features/tasks/tasksSli
 import { syncService } from './syncService';
 import { generateId } from '../../utils';
 import { dbService } from './dbService';
-
-const hasTaskAccess = (
-  task: Task,
-  session: Awaited<ReturnType<typeof dbService.getCurrentSession>>,
-  isDemo: boolean
-): boolean => {
-  if (isDemo) {
-    return task.demoData === true;
-  }
-
-  return Boolean(
-    session &&
-    !task.demoData &&
-    (task.assigneeId === session.userId || task.createdBy === session.userId)
-  );
-};
+import { hasTaskAccess } from './storageAccess';
 
 /**
  * Сервис для работы с задачами в локальном хранилище
