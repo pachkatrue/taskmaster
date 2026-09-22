@@ -6,7 +6,6 @@ import {
   createProject,
   updateProject,
   deleteProject,
-  updateProjectProgress,
   type Project,
   ProjectStatus,
   type ProjectUpdate
@@ -52,7 +51,7 @@ export const useProjects = () => {
   // Изменение прогресса проекта
   const changeProjectProgress = useCallback(
     (projectId: string, progress: number) => {
-      return dispatch(updateProjectProgress({ projectId, progress })).unwrap();
+      return dispatch(updateProject({ id: projectId, progress })).unwrap();
     },
     [dispatch]
   );
