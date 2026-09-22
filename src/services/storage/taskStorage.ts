@@ -4,6 +4,22 @@ import { syncService } from './syncService';
 import { generateId } from '../../utils';
 import { dbService } from './dbService';
 
+const hasTaskAccess = (
+  task: Task,
+  session: Awaited<ReturnType<typeof dbService.getCurrentSession>>,
+  isDemo: boolean
+): boolean => {
+  if (isDemo) {
+    return task.demoData === true;
+  }
+
+  return Boolean(
+    session &&
+    !task.demoData &&
+    (task.assigneeId === session.userId || task.createdBy === session.userId)
+  );
+};
+
 /**
  * Сервис для работы с задачами в локальном хранилище
  * Расширенная версия с полной поддержкой оффлайн-режима и синхронизации
@@ -194,9 +210,7 @@ export const taskStorage = {
           throw new Error(`Задача с ID ${taskData.id} не найдена`);
         }
 
-        // Проверяем доступ к задаче
-        if ((isDemo && !existingTask.demoData) ||
-          (!isDemo && existingTask.demoData)) {
+        if (!hasTaskAccess(existingTask, session, isDemo)) {
           throw new Error(`Доступ к задаче с ID ${taskData.id} запрещен`);
         }
 
@@ -251,9 +265,7 @@ export const taskStorage = {
         throw new Error(`Задача с ID ${id} не найдена`);
       }
 
-      // Проверяем доступ к задаче
-      if ((isDemo && !task.demoData) ||
-        (!isDemo && task.demoData)) {
+      if (!hasTaskAccess(task, session, isDemo)) {
         throw new Error(`Доступ к задаче с ID ${id} запрещен`);
       }
 
@@ -303,35 +315,51 @@ export const taskStorage = {
    */
   async bulkUpdateTasks(tasks: Array<Partial<Task> & { id: string }>): Promise<void> {
     try {
-      // Используем транзакцию для обеспечения атомарности операции
-      await db.runTransaction('readwrite', ['tasks'], async () => {
-        const timestamp = new Date().toISOString();
+      const session = await dbService.getCurrentSession();
+      if (!session) {
+        throw new Error('Пользователь не авторизован');
+      }
 
-        // Обновляем каждую задачу
+      const isDemo =
+        session.provider === 'demo' ||
+        localStorage.getItem('demo_mode') === 'true';
+      const updatedTasks: Task[] = [];
+      const timestamp = new Date().toISOString();
+
+      await db.runTransaction('readwrite', ['tasks'], async () => {
         for (const taskData of tasks) {
           const existingTask = await db.tasks.get(taskData.id);
 
-          if (existingTask) {
-            const updatedTask = {
-              ...existingTask,
-              ...taskData,
-              updatedAt: timestamp
-            };
-
-            await db.tasks.update(taskData.id, updatedTask);
-
-            // Добавляем в очередь синхронизации только если онлайн
-            if (navigator.onLine) {
-              await syncService.addToSyncQueue('update', 'task', updatedTask);
-            }
+          if (!existingTask) {
+            throw new Error(`Задача с ID ${taskData.id} не найдена`);
           }
+
+          if (!hasTaskAccess(existingTask, session, isDemo)) {
+            throw new Error(`Доступ к задаче с ID ${taskData.id} запрещен`);
+          }
+
+          const updatedTask: Task = {
+            ...existingTask,
+            ...taskData,
+            updatedAt: timestamp,
+            demoData: existingTask.demoData,
+          };
+
+          await db.tasks.update(taskData.id, updatedTask);
+          updatedTasks.push(updatedTask);
         }
       });
+
+      if (navigator.onLine && !isDemo) {
+        for (const updatedTask of updatedTasks) {
+          await syncService.addToSyncQueue('update', 'task', updatedTask);
+        }
+      }
     } catch (error) {
       handleDexieError(error, 'Ошибка при массовом обновлении задач');
       throw error;
     }
-  },
+  }
 
   /**
    * Получить задачи с наступающими сроками
@@ -339,20 +367,20 @@ export const taskStorage = {
    */
   async getUpcomingTasks(daysThreshold: number = 7): Promise<Task[]> {
     try {
+      if (daysThreshold < 0) {
+        throw new Error('Количество дней должно быть неотрицательным');
+      }
+
       const now = new Date();
       const thresholdDate = new Date();
       thresholdDate.setDate(now.getDate() + daysThreshold);
 
-      // Оптимизированная версия - используем индексы для ускорения запроса
-      // В Dexie нет прямой поддержки запросов по диапазону дат, поэтому фильтруем в памяти
-      // Для больших объемов данных можно реализовать индекс по датам
-      const tasks = await db.tasks
-      .where('status')
-      .notEqual('done') // Используем индекс по статусу
-      .toArray();
+      const tasks = await this.getAllTasks();
 
       return tasks.filter(task => {
-        if (!task.dueDate) return false;
+        if (!task.dueDate || task.status === 'done') {
+          return false;
+        }
 
         const dueDate = new Date(task.dueDate);
         return dueDate >= now && dueDate <= thresholdDate;
