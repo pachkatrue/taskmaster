@@ -8,7 +8,8 @@ export class SyncTransportError extends Error {
   constructor(
     message: string,
     readonly retryable = true,
-    readonly status?: number
+    readonly status?: number,
+    readonly discard = false
   ) {
     super(message);
     this.name = 'SyncTransportError';
@@ -30,7 +31,7 @@ class HttpSyncTransport implements SyncTransport {
     const message = `Sync API returned ${response.status}`;
 
     if (response.status === 400 || response.status === 422) {
-      throw new SyncTransportError(message, false, response.status);
+      throw new SyncTransportError(message, false, response.status, true);
     }
 
     throw new SyncTransportError(message, true, response.status);
