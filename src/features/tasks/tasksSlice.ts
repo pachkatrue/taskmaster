@@ -6,6 +6,11 @@ import { taskStorage } from '../../services/storage/taskStorage';
 export type TaskStatus = 'todo' | 'inProgress' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high';
 
+export type TaskUpdate = Partial<Pick<
+  Task,
+  'title' | 'description' | 'status' | 'priority' | 'dueDate' | 'projectId' | 'assigneeId' | 'assignee'
+>>;
+
 export interface Task {
   id: string;
   title: string;
@@ -86,7 +91,7 @@ export const updateTaskStatus = createAsyncThunk(
 
 export const updateTask = createAsyncThunk(
   'tasks/updateTask',
-  async (taskData: Partial<Task> & { id: string }, { rejectWithValue }) => {
+  async (taskData: TaskUpdate & { id: string }, { rejectWithValue }) => {
     try {
       // Обновляем задачу в хранилище
       return await taskStorage.updateTask(taskData);
