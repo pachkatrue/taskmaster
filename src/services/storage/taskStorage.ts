@@ -230,26 +230,23 @@ export const taskStorage = {
    */
   async deleteTask(id: string): Promise<void> {
     try {
-      // Проверяем, находимся ли мы в демо-режиме
       const session = await dbService.getCurrentSession();
       const isDemo = session?.provider === 'demo' || localStorage.getItem('demo_mode') === 'true';
 
-      // Получаем задачу отдельно
-      const task = await db.tasks.get(id);
-      if (!task) {
-        throw new Error(`Задача с ID ${id} не найдена`);
-      }
-
-      if (!hasTaskAccess(task, session, isDemo)) {
-        throw new Error(`Доступ к задаче с ID ${id} запрещен`);
-      }
-
-      // Удаляем задачу из БД в транзакции
       await db.runTransaction('readwrite', ['tasks'], async () => {
+        const task = await db.tasks.get(id);
+
+        if (!task) {
+          throw new Error(`Задача с ID ${id} не найдена`);
+        }
+
+        if (!hasTaskAccess(task, session, isDemo)) {
+          throw new Error(`Доступ к задаче с ID ${id} запрещен`);
+        }
+
         await db.tasks.delete(id);
       });
 
-      // ВНЕ транзакции: добавляем операцию в syncQueue если онлайн и не в демо-режиме
       if (navigator.onLine && !isDemo) {
         await syncService.addToSyncQueue('delete', 'task', { id });
       }
@@ -320,7 +317,7 @@ export const taskStorage = {
             demoData: existingTask.demoData,
           };
 
-          await db.tasks.update(taskData.id, updatedTask);
+          await db.tasks.put(updatedTask);
           updatedTasks.push(updatedTask);
         }
       });
