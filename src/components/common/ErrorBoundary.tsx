@@ -103,7 +103,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             </div>
 
             {/* Показываем техническую информацию об ошибке в режиме разработки */}
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-left">
                 <h3 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">
                   Техническая информация:
