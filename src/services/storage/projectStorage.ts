@@ -5,23 +5,7 @@ import { syncService } from './syncService';
 import { generateId } from '../../utils';
 import { taskStorage } from './taskStorage';
 import { dbService } from './dbService';
-
-const hasProjectAccess = (
-  project: Project,
-  session: Awaited<ReturnType<typeof dbService.getCurrentSession>>,
-  isDemo: boolean
-): boolean => {
-  if (isDemo) {
-    return project.demoData === true;
-  }
-
-  return Boolean(
-    session &&
-    !project.demoData &&
-    (project.createdBy === session.userId ||
-      project.teamMembers?.some(member => member.id === session.userId))
-  );
-};
+import { hasProjectAccess } from './storageAccess';
 
 /**
  * Сервис для работы с проектами в локальном хранилище
