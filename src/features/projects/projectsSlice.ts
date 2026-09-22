@@ -5,6 +5,11 @@ import { projectStorage } from '../../services/storage/projectStorage';
 // Типы для проектов
 export type ProjectStatus = 'planning' | 'active' | 'completed' | 'onHold';
 
+export type ProjectUpdate = Partial<Pick<
+  Project,
+  'title' | 'description' | 'status' | 'progress' | 'startDate' | 'endDate' | 'teamMembers'
+>>;
+
 export interface Project {
   id: string;
   title: string;
@@ -100,7 +105,7 @@ export const updateProjectStatus = createAsyncThunk(
 
 export const updateProject = createAsyncThunk(
   'projects/updateProject',
-  async (projectData: Partial<Project> & { id: string }, { rejectWithValue }) => {
+  async (projectData: ProjectUpdate & { id: string }, { rejectWithValue }) => {
     try {
       // Обновляем проект в хранилище
       return await projectStorage.updateProject(projectData);
