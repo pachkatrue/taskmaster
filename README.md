@@ -1,6 +1,6 @@
-# TaskMaster Pro
+# TaskMaster
 
-A task and project management web application focused on offline-first UX, drag-and-drop workflows, analytics and a feature-oriented React architecture.
+A task and project management web application focused on offline-first UX, drag-and-drop workflows, analytics, and feature-oriented React architecture.
 
 ## Preview
 
@@ -13,7 +13,7 @@ A task and project management web application focused on offline-first UX, drag-
 - Project and task management
 - Drag-and-drop task boards
 - Analytics and data visualization
-- Offline-first storage with synchronization
+- Offline-first storage with IndexedDB
 - Authentication and user settings
 - Dark/light themes
 - Web Push notifications
@@ -21,8 +21,8 @@ A task and project management web application focused on offline-first UX, drag-
 
 ## Tech stack
 
-- React 18 + TypeScript
-- Redux Toolkit + React Router
+- React 19 + TypeScript
+- Redux Toolkit + React Router 7
 - Tailwind CSS
 - React DnD + Framer Motion
 - Recharts
@@ -46,19 +46,35 @@ Production build:
 npm run build
 ```
 
-Tests:
+Run tests with coverage:
 
 ```bash
 npm test
 ```
 
+Lint:
+
+```bash
+npm run lint
+```
+
 ## Architecture
 
-The codebase is organized around application features and domains rather than only technical layers. Shared UI, hooks, services, storage and state-management utilities are separated from feature-specific code.
+The application is organized around business features rather than a flat collection of technical layers. Feature modules own their state and domain logic, while shared UI, hooks, services, storage, and application infrastructure remain separated.
+
+The main application areas include:
+
+- `features/` — domain state and feature-specific logic
+- `components/` — reusable UI components
+- `hooks/` — reusable React hooks
+- `services/` — browser, API, notification, and persistence integrations
+- `store/` — Redux store configuration and typed hooks
+- `pages/` and `layouts/` — route-level composition
+- `types/` and `utils/` — shared types and utilities
 
 ## Status
 
-Active portfolio project / work in progress.
+Portfolio project / work in progress.
 
 ## License
 
