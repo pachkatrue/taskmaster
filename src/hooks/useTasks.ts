@@ -6,9 +6,10 @@ import {
   updateTask,
   deleteTask,
   updateTaskStatus,
-  Task,
+  type Task,
   TaskStatus,
-  TaskPriority
+  TaskPriority,
+  type TaskUpdate
 } from '../features/tasks/tasksSlice';
 
 /**
@@ -34,7 +35,7 @@ export const useTasks = () => {
 
   // Обновление задачи
   const editTask = useCallback(
-    (taskData: Partial<Task> & { id: string }) => {
+    (taskData: TaskUpdate & { id: string }) => {
       return dispatch(updateTask(taskData));
     },
     [dispatch]
