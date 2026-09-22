@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createSyncTransport,
-  SyncTransportError,
 } from './syncTransport';
 import type { SyncQueueItem } from './syncService';
 
