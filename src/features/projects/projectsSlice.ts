@@ -87,21 +87,6 @@ export const createProject = createAsyncThunk(
   }
 );
 
-export const updateProjectProgress = createAsyncThunk(
-  'projects/updateProjectProgress',
-  async ({ projectId, progress }: { projectId: string; progress: number }, { rejectWithValue }) => {
-    try { return await projectStorage.updateProjectProgress(projectId, progress); }
-    catch (err) { return rejectWithValue(err instanceof Error ? err.message : 'Ошибка при обновлении прогресса проекта.'); }
-  }
-);
-
-export const updateProjectStatus = createAsyncThunk(
-  'projects/updateProjectStatus',
-  async ({ projectId, status }: { projectId: string; status: ProjectStatus }, { rejectWithValue }) => {
-    try { return await projectStorage.updateProjectStatus(projectId, status); }
-    catch (err) { return rejectWithValue(err instanceof Error ? err.message : 'Ошибка при обновлении статуса проекта.'); }
-  }
-);
 
 export const updateProject = createAsyncThunk(
   'projects/updateProject',
@@ -273,17 +258,6 @@ const projectsSlice = createSlice({
     .addCase(updateProject.rejected, (state, action) => {
       state.isLoading = false;
       state.error = action.payload as string;
-    })
-
-    .addCase(updateProjectProgress.fulfilled, (state, action: PayloadAction<Project>) => {
-      state.isLoading = false;
-      const index = state.projects.findIndex(project => project.id === action.payload.id);
-      if (index !== -1) state.projects[index] = action.payload;
-    })
-    .addCase(updateProjectStatus.fulfilled, (state, action: PayloadAction<Project>) => {
-      state.isLoading = false;
-      const index = state.projects.findIndex(project => project.id === action.payload.id);
-      if (index !== -1) state.projects[index] = action.payload;
     })
 
     // Обработка состояний удаления проекта
