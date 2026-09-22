@@ -1,159 +1,59 @@
 # TaskMaster Pro
 
-Продвинутое приложение для управления задачами и проектами с поддержкой оффлайн-режима, Drag-and-Drop интерфейсом и визуализацией данных.
+A task and project management web application focused on offline-first UX, drag-and-drop workflows, analytics and a feature-oriented React architecture.
 
-## Функциональность
+## Highlights
 
-- Управление проектами и задачами с Drag-and-Drop интерфейсом
-- Аналитика и визуализация данных
-- Темная/светлая тема и персонализация
-- Оффлайн-работа и синхронизация
-- Авторизация пользователей
+- Project and task management
+- Drag-and-drop task boards
+- Analytics and data visualization
+- Offline-first storage with synchronization
+- Authentication and user settings
+- Dark/light themes
+- Web Push notifications
+- Automated tests and code-quality tooling
 
-## Технологический стек
+## Tech stack
 
-### Основа
-- React 18 с функциональными компонентами и хуками
-- TypeScript для типизации
-- Redux Toolkit для управления состоянием
-- React Router для маршрутизации
+- React 18 + TypeScript
+- Redux Toolkit + React Router
+- Tailwind CSS
+- React DnD + Framer Motion
+- Recharts
+- Dexie / IndexedDB
+- Vite
+- Vitest + React Testing Library
+- ESLint + Prettier + Husky
 
-### UI/UX и компоненты
-- Tailwind CSS для стилизации
-- Framer Motion для анимаций
-- React DnD для drag-and-drop
-- Recharts для визуализаций
+## Getting started
 
-### Инфраструктура и DevOps
-- Vite для быстрой сборки
-- Vitest и React Testing Library для тестирования
-- ESLint + Prettier для форматирования кода
-- Husky для pre-commit хуков
+Requirements: Node.js and npm.
 
-### Дополнительно
-- Dexie.js для локального хранилища на базе IndexedDB
-- Service Worker для оффлайн-функциональности
-- Web Push API для уведомлений
-
-## Установка и запуск
-
-### Предварительные требования
-- Node.js 16.x или выше
-- npm 8.x или выше
-
-### Установка
 ```bash
-# Клонирование репозитория
-git clone https://github.com/yourusername/taskmaster-pro.git
-cd taskmaster-pro
-
-# Установка зависимостей
 npm install
-```
-
-### Запуск в режиме разработки
-```bash
 npm run dev
 ```
 
-### Сборка для продакшн
+Production build:
+
 ```bash
 npm run build
 ```
 
-### Запуск тестов
+Tests:
+
 ```bash
 npm test
 ```
 
-## Структура проекта
+## Architecture
 
-```
-taskmaster-pro/
-├── public/                  # Статические файлы
-│   ├── service-worker.js    # Service Worker для оффлайн-функций
-│   └── offline.html         # Страница для оффлайн-режима
-├── src/
-│   ├── assets/              # Изображения и другие ресурсы
-│   ├── components/          # Многоразовые компоненты
-│   │   ├── ui/              # Базовые UI компоненты
-│   │   ├── forms/           # Формы и связанные компоненты
-│   │   ├── common/          # Общие компоненты (Header, Sidebar и т.д.)
-│   │   └── modals/          # Модальные окна
-│   ├── features/            # Функциональные модули приложения
-│   │   ├── auth/            # Авторизация и аутентификация
-│   │   ├── tasks/           # Управление задачами
-│   │   ├── projects/        # Управление проектами
-│   │   ├── analytics/       # Аналитика и визуализации
-│   │   └── settings/        # Настройки приложения
-│   ├── hooks/               # Кастомные React-хуки
-│   ├── layouts/             # Макеты страниц
-│   ├── pages/               # Страницы приложения
-│   ├── services/            # Сервисы для работы с API и хранилищем
-│   │   ├── api/             # API-сервисы
-│   │   ├── storage/         # Локальное хранилище
-│   │   └── notifications/   # Уведомления
-│   ├── store/               # Redux стор и связанные файлы
-│   ├── styles/              # Глобальные стили
-│   ├── types/               # Типы TypeScript
-│   ├── utils/               # Вспомогательные функции
-│   ├── App.tsx              # Корневой компонент
-│   ├── main.tsx             # Точка входа
-│   ├── router.tsx           # Настройка маршрутизации
-│   └── serviceWorkerRegistration.ts  # Регистрация Service Worker
-├── .eslintrc.json           # Конфигурация ESLint
-├── .prettierrc.json         # Конфигурация Prettier
-├── tsconfig.json            # Конфигурация TypeScript
-├── tailwind.config.js       # Конфигурация Tailwind CSS
-├── vite.config.ts           # Конфигурация Vite
-└── package.json             # Зависимости и скрипты
-```
+The codebase is organized around application features and domains rather than only technical layers. Shared UI, hooks, services, storage and state-management utilities are separated from feature-specific code.
 
-## Основные возможности
+## Status
 
-### Управление задачами
-- Создание, редактирование и удаление задач
-- Настройка приоритетов и дедлайнов
-- Drag-and-Drop перемещение задач между статусами
-- Фильтрация и сортировка задач
+Active portfolio project / work in progress.
 
-### Управление проектами
-- Создание проектов с описанием и дедлайнами
-- Назначение участников проекта
-- Отслеживание прогресса проекта
-- Группировка задач по проектам
-
-### Аналитика и статистика
-- Визуализация прогресса по проектам
-- Статистика выполнения задач
-- Отчеты по производительности команды
-- Диаграммы распределения задач по статусам и приоритетам
-
-### Работа в оффлайн-режиме
-- Полная функциональность без подключения к интернету
-- Автоматическая синхронизация при восстановлении соединения
-- Уведомления о статусе подключения
-
-### Персонализация
-- Темная и светлая тема
-- Настройка уведомлений
-- Выбор языка интерфейса
-- Пользовательские настройки отображения
-
-## Добавление новых функций
-
-Для добавления новых функций создайте новую ветку, реализуйте функциональность, добавьте тесты и отправьте pull request.
-
-```bash
-# Создание новой ветки
-git checkout -b feature/new-feature
-
-# После внесения изменений
-git add .
-git commit -m "Add new feature"
-git push origin feature/new-feature
-```
-
-## Лицензия
+## License
 
 MIT
