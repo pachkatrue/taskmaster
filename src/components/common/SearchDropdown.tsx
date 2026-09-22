@@ -134,7 +134,7 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
     if (!query.trim()) {
       return 'Введите запрос для поиска';
     }
-    return `По запросу "${query}" ничего не найдено`;
+    return `По запросу &quot;${query}&quot; ничего не найдено`;
   };
 
   // Выделение совпадающего текста в результатах поиска
@@ -223,7 +223,7 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
                           <>
                             {result.projectTitle && (
                               <span className="mr-2">
-                                в проекте "{result.projectTitle}"
+                                в проекте &quot;{result.projectTitle}&quot;
                               </span>
                             )}
 
