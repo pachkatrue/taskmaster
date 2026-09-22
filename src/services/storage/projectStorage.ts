@@ -237,58 +237,50 @@ export const projectStorage = {
    */
   async deleteProject(id: string): Promise<void> {
     try {
-      // Проверяем, находимся ли мы в демо-режиме
       const session = await dbService.getCurrentSession();
       const isDemo = session?.provider === 'demo' || localStorage.getItem('demo_mode') === 'true';
+      const updatedTasks: Task[] = [];
 
-      // Используем транзакцию для согласованной обработки проекта и связанных задач
       await db.runTransaction('readwrite', ['projects', 'tasks'], async () => {
-        // Сначала получаем проект для синхронизации
         const project = await db.projects.get(id);
 
         if (!project) {
           throw new Error(`Проект с ID ${id} не найден`);
         }
 
-        // Проверяем доступ к проекту
-        if ((isDemo && !project.demoData) ||
-          (!isDemo && project.demoData)) {
+        if (!hasProjectAccess(project, session, isDemo)) {
           throw new Error(`Доступ к проекту с ID ${id} запрещен`);
         }
 
-        // Получаем связанные задачи
-        const projectTasks = await taskStorage.getTasksByProject(id);
+        const projectTasks = await db.tasks.where('projectId').equals(id).toArray();
+        const timestamp = new Date().toISOString();
 
-        // Удаляем проект из локальной БД
         await db.projects.delete(id);
 
-        // Добавляем операцию удаления проекта в очередь синхронизации если онлайн и не в демо-режиме
-        if (navigator.onLine && !isDemo) {
-          await syncService.addToSyncQueue('delete', 'project', { id });
-        }
-
-        // Обновляем связанные задачи - удаляем ссылку на проект
         for (const task of projectTasks) {
-          await db.tasks.update(task.id, {
+          const updatedTask: Task = {
+            ...task,
             projectId: undefined,
-            updatedAt: new Date().toISOString()
-          });
+            updatedAt: timestamp,
+          };
 
-          // Добавляем операцию обновления задачи в очередь синхронизации если онлайн и не в демо-режиме
-          if (navigator.onLine && !isDemo) {
-            await syncService.addToSyncQueue('update', 'task', {
-              ...task,
-              projectId: undefined,
-              updatedAt: new Date().toISOString()
-            });
-          }
+          await db.tasks.put(updatedTask);
+          updatedTasks.push(updatedTask);
         }
       });
+
+      if (navigator.onLine && !isDemo) {
+        await syncService.addToSyncQueue('delete', 'project', { id });
+
+        for (const task of updatedTasks) {
+          await syncService.addToSyncQueue('update', 'task', task);
+        }
+      }
     } catch (error) {
       handleDexieError(error, `Ошибка при удалении проекта с ID ${id}`);
       throw error;
     }
-  },
+  }
 
   /**
    * Добавить участника в проект с безопасной обработкой массива
@@ -298,46 +290,44 @@ export const projectStorage = {
     member: { id: string; name: string; avatar?: string }
   ): Promise<Project> {
     try {
-      return await db.runTransaction('readwrite', ['projects'], async () => {
+      const session = await dbService.getCurrentSession();
+      const isDemo = session?.provider === 'demo' || localStorage.getItem('demo_mode') === 'true';
+
+      const updatedProject = await db.runTransaction('readwrite', ['projects'], async () => {
         const project = await db.projects.get(projectId);
 
         if (!project) {
           throw new Error(`Проект с ID ${projectId} не найден`);
         }
 
-        // Проверяем, нет ли уже такого участника
-        const isExistingMember = project.teamMembers.some(m => m.id === member.id);
-
-        if (isExistingMember) {
-          return project; // Участник уже существует, просто возвращаем проект
+        if (!hasProjectAccess(project, session, isDemo)) {
+          throw new Error(`Доступ к проекту с ID ${projectId} запрещен`);
         }
 
-        // Создаем новый массив участников, а не модифицируем существующий
-        const updatedTeamMembers = [...project.teamMembers, member];
+        if (project.teamMembers.some(m => m.id === member.id)) {
+          return project;
+        }
 
-        // Обновляем проект
         const updatedProject: Project = {
           ...project,
-          teamMembers: updatedTeamMembers,
-          updatedAt: new Date().toISOString()
+          teamMembers: [...project.teamMembers, member],
+          updatedAt: new Date().toISOString(),
         };
 
-        // Сохраняем в БД
-        const { id, ...fieldsToUpdate } = updatedProject;
-        await db.projects.update(id, fieldsToUpdate);
-
-        // Добавляем в очередь синхронизации
-        if (navigator.onLine) {
-          await syncService.addToSyncQueue('update', 'project', updatedProject);
-        }
-
+        await db.projects.put(updatedProject);
         return updatedProject;
       });
+
+      if (navigator.onLine && !isDemo) {
+        await syncService.addToSyncQueue('update', 'project', updatedProject);
+      }
+
+      return updatedProject;
     } catch (error) {
       handleDexieError(error, `Ошибка при добавлении участника в проект с ID ${projectId}`);
       throw error;
     }
-  },
+  }
 
   /**
    * Поиск задач по тексту с оптимизированным алгоритмом
@@ -364,48 +354,52 @@ export const projectStorage = {
    */
   async updateProjectProgress(id: string, progress?: number): Promise<Project> {
     try {
-      // Используем транзакцию для согласованных операций
-      return await db.runTransaction('readwrite', ['projects', 'tasks'], async () => {
-        const project = await db.projects.get(id);
+      const session = await dbService.getCurrentSession();
+      const isDemo = session?.provider === 'demo' || localStorage.getItem('demo_mode') === 'true';
 
-        if (!project) {
-          throw new Error(`Проект с ID ${id} не найден`);
-        }
+      const updatedProject = await db.runTransaction(
+        'readwrite',
+        ['projects', 'tasks'],
+        async () => {
+          const project = await db.projects.get(id);
 
-        // Если прогресс не указан, рассчитываем на основе задач проекта
-        if (progress === undefined) {
-          const tasks = await taskStorage.getTasksByProject(id);
-
-          if (tasks.length === 0) {
-            progress = 0;
-          } else {
-            // Считаем завершенные задачи
-            const completedTasks = tasks.filter(task => task.status === 'done').length;
-            progress = Math.round((completedTasks / tasks.length) * 100);
+          if (!project) {
+            throw new Error(`Проект с ID ${id} не найден`);
           }
+
+          if (!hasProjectAccess(project, session, isDemo)) {
+            throw new Error(`Доступ к проекту с ID ${id} запрещен`);
+          }
+
+          let nextProgress = progress;
+
+          if (nextProgress === undefined) {
+            const tasks = await db.tasks.where('projectId').equals(id).toArray();
+            nextProgress = tasks.length === 0
+              ? 0
+              : Math.round((tasks.filter(task => task.status === 'done').length / tasks.length) * 100);
+          }
+
+          const updatedProject: Project = {
+            ...project,
+            progress: Math.min(100, Math.max(0, nextProgress)),
+            updatedAt: new Date().toISOString(),
+          };
+
+          await db.projects.put(updatedProject);
+          return updatedProject;
         }
+      );
 
-        // Обновляем прогресс
-        const updatedProject: Project = {
-          ...project,
-          progress,
-          updatedAt: new Date().toISOString()
-        };
+      if (navigator.onLine && !isDemo) {
+        await syncService.addToSyncQueue('update', 'project', updatedProject);
+      }
 
-        // Сохраняем в БД
-        const { id: projectId, ...fieldsToUpdate } = updatedProject;
-        await db.projects.update(projectId, fieldsToUpdate);
-
-        // Добавляем в очередь синхронизации
-        if (navigator.onLine) {
-          await syncService.addToSyncQueue('update', 'project', updatedProject);
-        }
-
-        return updatedProject;
-      });
+      return updatedProject;
     } catch (error) {
       handleDexieError(error, `Ошибка при обновлении прогресса проекта с ID ${id}`);
       throw error;
     }
   }
+
 };
