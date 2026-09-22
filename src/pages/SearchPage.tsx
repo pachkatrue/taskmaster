@@ -292,7 +292,7 @@ const SearchPage: React.FC = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
           <h2 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">
-            {query ? `По запросу "${query}" ничего не найдено` : 'Введите запрос для поиска'}
+            {query ? `По запросу &quot;${query}&quot; ничего не найдено` : 'Введите запрос для поиска'}
           </h2>
           <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
             {query ? 'Попробуйте изменить поисковый запрос или параметры фильтрации' :
