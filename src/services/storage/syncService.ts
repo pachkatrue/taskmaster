@@ -181,7 +181,7 @@ export const syncService = {
         await db.open();
       }
       // Устанавливаем дефолтный ID для элемента очереди
-      let id = `${entity}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      let id = `${entity}_${Date.now()}_${crypto.randomUUID()}`;
 
       // Для операций обновления и удаления используем ID объекта
       if (operation === 'update' || operation === 'delete') {
@@ -284,68 +284,27 @@ export const syncService = {
    */
   async processSyncItem(item: SyncQueueItem): Promise<boolean> {
     try {
-      // В реальном приложении здесь будут вызовы API
-      console.log(`Обработка элемента синхронизации: ${item.operation} ${item.entity}`, item.data);
-
-      const { entity } = item;
-
-      // Имитация задержки сетевого запроса
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Имитация случайной ошибки (10% вероятность)
-      if (Math.random() < 0.1) {
-        throw new Error('Симуляция случайной ошибки API');
-      }
-
-      // В зависимости от типа операции и сущности вызываем нужный метод API
-      switch (entity) {
-        case 'task':
-          // Обработка задачи
-          break;
-        case 'project':
-          // Обработка проекта
-          break;
-        case 'user':
-        case 'settings':
-          // Обработка других сущностей
-          break;
-      }
-
-      // Возвращаем успешный результат
+      await this.transport.send(item);
       return true;
     } catch (error) {
       console.error('Ошибка при обработке элемента синхронизации:', error);
 
-      // Дополнительная логика анализа ошибки API
-      if (error instanceof Error) {
-        // Если это ошибка авторизации, нужна повторная авторизация
-        if (error.message.includes('unauthorized') || error.message.includes('401')) {
-          // Отправляем событие о необходимости авторизации
-          window.dispatchEvent(
-            new CustomEvent('syncError', {
-              detail: { message: 'Требуется повторная авторизация' }
-            })
-          );
-          return false;
-        }
-
-        // Если это ошибка сервера, можно повторить запрос
-        if (error.message.includes('server error') || error.message.includes('500')) {
-          return false;
-        }
-
-        // Если это ошибка валидации, дальнейшие попытки бессмысленны
-        if (error.message.includes('validation') || error.message.includes('400')) {
-          console.warn('Ошибка валидации, дальнейшие попытки отменены:', error.message);
-          return true; // Отмечаем как обработанную, чтобы не пытаться повторно
-        }
+      if (error instanceof SyncTransportError && !error.retryable) {
+        return error.discard;
       }
 
-      // По умолчанию считаем, что можно повторить
+      if (error instanceof Error &&
+          (error.message.includes('unauthorized') || error.message.includes('401'))) {
+        window.dispatchEvent(
+          new CustomEvent('syncError', {
+            detail: { message: 'Требуется повторная авторизация' }
+          })
+        );
+      }
+
       return false;
     }
   },
-
   /**
    * Выполнить синхронизацию с сервером с расширенной обработкой ошибок
    * и отчетом о прогрессе
