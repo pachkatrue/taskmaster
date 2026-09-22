@@ -367,7 +367,7 @@ export const taskStorage = {
       handleDexieError(error, 'Ошибка при массовом обновлении задач');
       throw error;
     }
-  }
+  },
 
   /**
    * Получить задачи с наступающими сроками
