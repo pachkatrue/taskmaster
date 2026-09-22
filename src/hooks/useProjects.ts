@@ -7,8 +7,9 @@ import {
   updateProject,
   deleteProject,
   updateProjectProgress,
-  Project,
-  ProjectStatus
+  type Project,
+  ProjectStatus,
+  type ProjectUpdate
 } from '../features/projects/projectsSlice';
 
 /**
@@ -42,7 +43,7 @@ export const useProjects = () => {
 
   // Обновление проекта
   const editProject = useCallback(
-    (projectData: Partial<Project> & { id: string }) => {
+    (projectData: ProjectUpdate & { id: string }) => {
       return dispatch(updateProject(projectData));
     },
     [dispatch]
