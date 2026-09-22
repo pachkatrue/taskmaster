@@ -281,7 +281,7 @@ export const projectStorage = {
       handleDexieError(error, `Ошибка при удалении проекта с ID ${id}`);
       throw error;
     }
-  }
+  },
 
   /**
    * Добавить участника в проект с безопасной обработкой массива
