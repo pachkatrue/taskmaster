@@ -20,12 +20,9 @@ export const store = configureStore({
     settings: settingsReducer,
     notifications: notificationsReducer, // Добавляем новый редьюсер
   },
-  // Добавляем middleware, если потребуется
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: false,
-    }).concat(settingsPersistenceMiddleware),
-  devTools: process.env.NODE_ENV !== 'production', // Включаем DevTools только в режиме разработки
+    getDefaultMiddleware().concat(settingsPersistenceMiddleware),
+  devTools: import.meta.env.DEV,
 });
 
 // Выводим типы из нашего хранилища
