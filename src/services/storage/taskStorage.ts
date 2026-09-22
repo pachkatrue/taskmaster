@@ -162,7 +162,13 @@ export const taskStorage = {
 
       // Проверяем, находимся ли мы в демо-режиме
       const session = await dbService.getCurrentSession();
-      const isDemo = session?.provider === 'demo' || localStorage.getItem('demo_mode') === 'true';
+      if (!session) {
+        throw new Error('Пользователь не авторизован');
+      }
+
+      const isDemo =
+        session.provider === 'demo' ||
+        localStorage.getItem('demo_mode') === 'true';
 
       // Создаем новую задачу
       const newTask: Task = {
@@ -171,7 +177,7 @@ export const taskStorage = {
         createdAt: timestamp,
         updatedAt: timestamp,
         demoData: isDemo, // Явно устанавливаем флаг демо-данных
-        createdBy: session?.userId || 'unknown' // Добавляем создателя
+        createdBy: session.userId // Добавляем создателя
       };
 
       // Добавляем задачу в транзакции для обеспечения целостности
