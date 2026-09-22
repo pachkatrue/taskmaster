@@ -1,5 +1,6 @@
 import { db, handleDexieError } from './db';
 import type { Project, ProjectStatus, ProjectUpdate } from '../../features/projects/projectsSlice';
+import type { Task } from '../../features/tasks/tasksSlice';
 import { syncService } from './syncService';
 import { generateId } from '../../utils';
 import { taskStorage } from './taskStorage';
@@ -382,7 +383,7 @@ export const projectStorage = {
 
           const updatedProject: Project = {
             ...project,
-            progress: Math.min(100, Math.max(0, nextProgress)),
+            progress: Math.min(100, Math.max(0, nextProgress ?? 0)),
             updatedAt: new Date().toISOString(),
           };
 
