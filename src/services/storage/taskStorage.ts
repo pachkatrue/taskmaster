@@ -228,16 +228,17 @@ export const taskStorage = {
           demoData: existingTask.demoData // Сохраняем флаг демо-данных
         };
 
-        // Обновляем в локальной БД
+        // Обновляем только локальное состояние внутри транзакции.
         await db.tasks.update(taskData.id, updatedTask);
-
-        // Добавляем операцию в очередь синхронизации если онлайн и не в демо-режиме
-        if (navigator.onLine && !isDemo) {
-          await syncService.addToSyncQueue('update', 'task', updatedTask);
-        }
 
         return updatedTask;
       });
+
+      if (navigator.onLine && !isDemo) {
+        await syncService.addToSyncQueue('update', 'task', updatedTask);
+      }
+
+      return updatedTask;
     } catch (error) {
       handleDexieError(error, `Ошибка при обновлении задачи с ID ${taskData.id}`);
       throw error;
