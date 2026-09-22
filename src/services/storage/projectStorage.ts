@@ -1,5 +1,5 @@
 import { db, handleDexieError } from './db';
-import {Project, ProjectStatus} from '../../features/projects/projectsSlice';
+import type { Project, ProjectStatus, ProjectUpdate } from '../../features/projects/projectsSlice';
 import { syncService } from './syncService';
 import { generateId } from '../../utils';
 import { taskStorage } from './taskStorage';
@@ -187,7 +187,7 @@ export const projectStorage = {
   /**
    * Обновить проект с использованием транзакций
    */
-  async updateProject(projectData: Partial<Project> & { id: string }): Promise<Project> {
+  async updateProject(projectData: ProjectUpdate & { id: string }): Promise<Project> {
     try {
       const session = await dbService.getCurrentSession();
       const isDemo =
