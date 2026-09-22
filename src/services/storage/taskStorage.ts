@@ -42,10 +42,7 @@ export const taskStorage = {
       } else if (session) {
         // В обычном режиме возвращаем только задачи пользователя
         return await db.tasks
-        .filter(task =>
-          !task.demoData &&
-          (task.assigneeId === session.userId || task.createdBy === session.userId)
-        )
+        .filter(task => hasTaskAccess(task, session, false))
         .toArray();
       }
 
@@ -76,11 +73,7 @@ export const taskStorage = {
       } else if (session) {
         // В обычном режиме возвращаем только задачи пользователя с нужным статусом
         return await db.tasks
-        .filter(task =>
-          !task.demoData &&
-          task.status === status &&
-          (task.assigneeId === session.userId || task.createdBy === session.userId)
-        )
+        .filter(task => hasTaskAccess(task, session, false) && task.status === status)
         .toArray();
       }
 
@@ -111,11 +104,7 @@ export const taskStorage = {
       } else if (session) {
         // В обычном режиме возвращаем только задачи пользователя для указанного проекта
         return await db.tasks
-        .filter(task =>
-          !task.demoData &&
-          task.projectId === projectId &&
-          (task.assigneeId === session.userId || task.createdBy === session.userId)
-        )
+        .filter(task => hasTaskAccess(task, session, false) && task.projectId === projectId)
         .toArray();
       }
 
@@ -139,14 +128,7 @@ export const taskStorage = {
       const session = await dbService.getCurrentSession();
       const isDemo = session?.provider === 'demo' || localStorage.getItem('demo_mode') === 'true';
 
-      // Проверяем доступ к задаче
-      if ((isDemo && task.demoData) ||
-        (!isDemo && !task.demoData && session &&
-          (task.assigneeId === session.userId || task.createdBy === session.userId))) {
-        return task;
-      }
-
-      return undefined;
+      return hasTaskAccess(task, session, isDemo) ? task : undefined;
     } catch (error) {
       handleDexieError(error, `Ошибка при получении задачи с ID ${id}`);
       return undefined;
