@@ -17,7 +17,7 @@ const item: SyncQueueItem = {
 describe('sync transport', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
-    vi.unstubEnv('VITE_SYNC_API_URL');
+    vi.unstubAllEnvs();
   });
 
   it('sends queued operations to the configured API', async () => {
