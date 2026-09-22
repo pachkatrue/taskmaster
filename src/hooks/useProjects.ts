@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
-  fetchProjectsStart,
-  fetchProjectsSuccess,
-  fetchProjectsError,
+  fetchProjects,
   fetchProjectById,
   createProject,
   updateProject,
@@ -12,7 +10,6 @@ import {
   Project,
   ProjectStatus
 } from '../features/projects/projectsSlice';
-import { dbService } from '../services/storage/dbService';
 
 /**
  * Хук для работы с проектами
