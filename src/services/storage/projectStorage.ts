@@ -216,7 +216,7 @@ export const projectStorage = {
             createdBy: existingProject.createdBy,
           };
 
-          await db.projects.update(projectData.id, updatedProject);
+          await db.projects.put(updatedProject);
           return updatedProject;
         }
       );
