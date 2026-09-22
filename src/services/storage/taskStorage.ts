@@ -203,36 +203,37 @@ export const taskStorage = {
    */
   async updateTask(taskData: Partial<Task> & { id: string }): Promise<Task> {
     try {
-      // Проверяем, находимся ли мы в демо-режиме
       const session = await dbService.getCurrentSession();
-      const isDemo = session?.provider === 'demo' || localStorage.getItem('demo_mode') === 'true';
+      const isDemo =
+        session?.provider === 'demo' ||
+        localStorage.getItem('demo_mode') === 'true';
 
-      // Используем транзакцию для обеспечения целостности данных
-      return await db.runTransaction('readwrite', ['tasks'], async () => {
-        // Получаем текущую задачу
-        const existingTask = await db.tasks.get(taskData.id);
+      const updatedTask = await db.runTransaction(
+        'readwrite',
+        ['tasks'],
+        async () => {
+          const existingTask = await db.tasks.get(taskData.id);
 
-        if (!existingTask) {
-          throw new Error(`Задача с ID ${taskData.id} не найдена`);
+          if (!existingTask) {
+            throw new Error(`Задача с ID ${taskData.id} не найдена`);
+          }
+
+          if (!hasTaskAccess(existingTask, session, isDemo)) {
+            throw new Error(`Доступ к задаче с ID ${taskData.id} запрещен`);
+          }
+
+          const updatedTask: Task = {
+            ...existingTask,
+            ...taskData,
+            updatedAt: new Date().toISOString(),
+            demoData: existingTask.demoData,
+            createdBy: existingTask.createdBy,
+          };
+
+          await db.tasks.update(taskData.id, updatedTask);
+          return updatedTask;
         }
-
-        if (!hasTaskAccess(existingTask, session, isDemo)) {
-          throw new Error(`Доступ к задаче с ID ${taskData.id} запрещен`);
-        }
-
-        // Объединяем данные и обновляем timestamp
-        const updatedTask: Task = {
-          ...existingTask,
-          ...taskData,
-          updatedAt: new Date().toISOString(),
-          demoData: existingTask.demoData // Сохраняем флаг демо-данных
-        };
-
-        // Обновляем только локальное состояние внутри транзакции.
-        await db.tasks.update(taskData.id, updatedTask);
-
-        return updatedTask;
-      });
+      );
 
       if (navigator.onLine && !isDemo) {
         await syncService.addToSyncQueue('update', 'task', updatedTask);
