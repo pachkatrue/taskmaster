@@ -5,6 +5,23 @@ import { generateId } from '../../utils';
 import { taskStorage } from './taskStorage';
 import { dbService } from './dbService';
 
+const hasProjectAccess = (
+  project: Project,
+  session: Awaited<ReturnType<typeof dbService.getCurrentSession>>,
+  isDemo: boolean
+): boolean => {
+  if (isDemo) {
+    return project.demoData === true;
+  }
+
+  return Boolean(
+    session &&
+    !project.demoData &&
+    (project.createdBy === session.userId ||
+      project.teamMembers?.some(member => member.id === session.userId))
+  );
+};
+
 /**
  * Сервис для работы с проектами в локальном хранилище
  * Расширенная версия с полной поддержкой оффлайн-режима и синхронизации
@@ -131,7 +148,13 @@ export const projectStorage = {
 
       // Проверяем, находимся ли мы в демо-режиме
       const session = await dbService.getCurrentSession();
-      const isDemo = session?.provider === 'demo' || localStorage.getItem('demo_mode') === 'true';
+      if (!session) {
+        throw new Error('Пользователь не авторизован');
+      }
+
+      const isDemo =
+        session.provider === 'demo' ||
+        localStorage.getItem('demo_mode') === 'true';
 
       // Создаем новый проект
       const newProject: Project = {
@@ -140,7 +163,7 @@ export const projectStorage = {
         createdAt: timestamp,
         updatedAt: timestamp,
         demoData: isDemo, // Явно устанавливаем флаг демо-данных
-        createdBy: session?.userId || 'unknown' // Добавляем создателя
+        createdBy: session.userId // Добавляем создателя
       };
 
       // Используем транзакцию для обеспечения целостности
@@ -166,51 +189,43 @@ export const projectStorage = {
    */
   async updateProject(projectData: Partial<Project> & { id: string }): Promise<Project> {
     try {
-      // Проверяем, находимся ли мы в демо-режиме
       const session = await dbService.getCurrentSession();
-      const isDemo = session?.provider === 'demo' || localStorage.getItem('demo_mode') === 'true';
+      const isDemo =
+        session?.provider === 'demo' ||
+        localStorage.getItem('demo_mode') === 'true';
 
-      // Используем транзакцию для целостности данных
-      return await db.runTransaction('readwrite', ['projects'], async () => {
-        // Получаем текущий проект
-        const existingProject = await db.projects.get(projectData.id);
+      const updatedProject = await db.runTransaction(
+        'readwrite',
+        ['projects'],
+        async () => {
+          const existingProject = await db.projects.get(projectData.id);
 
-        if (!existingProject) {
-          throw new Error(`Проект с ID ${projectData.id} не найден`);
+          if (!existingProject) {
+            throw new Error(`Проект с ID ${projectData.id} не найден`);
+          }
+
+          if (!hasProjectAccess(existingProject, session, isDemo)) {
+            throw new Error(`Доступ к проекту с ID ${projectData.id} запрещен`);
+          }
+
+          const updatedProject: Project = {
+            ...existingProject,
+            ...projectData,
+            updatedAt: new Date().toISOString(),
+            demoData: existingProject.demoData,
+            createdBy: existingProject.createdBy,
+          };
+
+          await db.projects.update(projectData.id, updatedProject);
+          return updatedProject;
         }
+      );
 
-        // Проверяем доступ к проекту
-        if ((isDemo && !existingProject.demoData) ||
-          (!isDemo && existingProject.demoData)) {
-          throw new Error(`Доступ к проекту с ID ${projectData.id} запрещен`);
-        }
+      if (navigator.onLine && !isDemo) {
+        await syncService.addToSyncQueue('update', 'project', updatedProject);
+      }
 
-        // Обработка teamMembers для предотвращения проблем с вложенными объектами
-        let teamMembers = existingProject.teamMembers;
-        if (projectData.teamMembers) {
-          teamMembers = projectData.teamMembers;
-        }
-
-        // Объединяем данные и обновляем timestamp
-        const updatedProject: Project = {
-          ...existingProject,
-          ...projectData,
-          teamMembers,
-          updatedAt: new Date().toISOString(),
-          demoData: existingProject.demoData // Сохраняем флаг демо-данных
-        };
-
-        // Обновляем в локальной БД
-        const { id: projectId, ...fieldsToUpdate } = updatedProject;
-        await db.projects.update(projectId, fieldsToUpdate);
-
-        // Добавляем операцию в очередь синхронизации если онлайн и не в демо-режиме
-        if (navigator.onLine && !isDemo) {
-          await syncService.addToSyncQueue('update', 'project', updatedProject);
-        }
-
-        return updatedProject;
-      });
+      return updatedProject;
     } catch (error) {
       handleDexieError(error, `Ошибка при обновлении проекта с ID ${projectData.id}`);
       throw error;
